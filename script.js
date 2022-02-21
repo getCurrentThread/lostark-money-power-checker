@@ -6,15 +6,11 @@ fetch('/Cash/GetChargeList?Page=1&StartDate=1990.01.01&EndDate=2100.12.31')
         const parser = new DOMParser();
         const doc = parser.parseFromString(text, "text/html");
         const pageNum = doc.getElementsByClassName("pagination__last")[0].getAttribute("onClick");
-        let lastNum = 1;
-        if(pageNum != null){
-            lastNum = pageNum.replace(/[^0-9]/g,"");
-        }
-        return lastNum;
+        return Number(pageNum.replace?.(/[^0-9]/g,"") || 1);
     })
-    .then(lastNum => {
+    .then(lastPage => {
         const promises = [];
-        for(var i = 1; i <= lastNum; i++){
+        for(var i = 1; i <= lastPage; i++){
             promises.push(fetch(`/Cash/GetChargeList?Page=${i}&StartDate=1990.01.01&EndDate=2100.12.31`)
                 .then((response) => {
                     return response.text();
@@ -25,10 +21,8 @@ fetch('/Cash/GetChargeList?Page=1&StartDate=1990.01.01&EndDate=2100.12.31')
                     const list = doc.getElementsByClassName("list__price");
                     const prices = [];
                     for(var j = 0; j < list.length; j++){
-                        var price = list[j].innerText;
-                        if(price != null){
-                            prices.push(Number(price.replace(/[^0-9]/g,"")));
-                        }
+                        var price = list[j]?.innerText.replace?.(/[^0-9]/g,"");
+                        prices.push(Number(price ?? 0));
                     }
                     return prices.reduce((a,b) => a + b, 0);
                 })
@@ -37,7 +31,7 @@ fetch('/Cash/GetChargeList?Page=1&StartDate=1990.01.01&EndDate=2100.12.31')
         return Promise.all(promises)
             .then(prices => prices.reduce((a,b) => a + b, 0))
             .then(total => {
-                console.log(total);
+                console.log("총 사용 금액", `${total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`);
                 alert(`현재까지 ${total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원 사용하셨습니다`);
                 return total;
             });
